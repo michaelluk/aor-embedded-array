@@ -22,7 +22,9 @@ yarn add aor-embedded-array
 
 ## Usage
 
-In your `App.js` or wherever you want to call `<Admin>` component define the `restClientRouter` like this
+### Basic Usage
+
+Define the `Create` and `Edit` View like this:
 
 ```jsx
  <EmbeddedArrayInput source="links">
@@ -35,3 +37,102 @@ In your `App.js` or wherever you want to call `<Admin>` component define the `re
  </EmbeddedArrayInput>
 ```
 
+Define the `Show` and `List` View like this:
+
+```jsx
+ <EmbeddedArrayField source="links">
+     <UrlField source="url" />
+     <TextField source="context" />
+     <EmbeddedArrayField source="metadata">
+         <TextField source="name" />
+         <TextField source="value" />
+     </EmbeddedArrayField>
+ </EmbeddedArrayField>
+```
+
+For primitive arrays, define the Views the same way but without the source prop for the unique child:
+
+```jsx
+ <EmbeddedArrayInput source="links">
+     <LongTextInput />
+ </EmbeddedArrayInput>
+```
+
+### Using Custom action buttons
+
+```jsx
+ import FlatButton from 'material-ui/FlatButton';
+ import ActionDeleteIcon from 'material-ui/svg-icons/action/delete';
+ const CustomDeleteButton = ({items, index}) => (
+     <FlatButton
+         key={index}
+         secondary
+         label="Delete"
+         icon={<ActionDeleteIcon />}
+         onClick={() => {
+             // Take custom action
+             console.log(items, index);
+             items.remove(index);
+         }}
+     />
+ )
+```
+
+```jsx
+ var style = {
+     actionsContainerStyle: {
+         display: "inline-block",
+         clear: "both",
+         float: "right",
+         padding: "2em 0em 0em 0em"
+     }
+ }
+ <EmbeddedArrayInput source="links" 
+     actionsContainerStyle={style.actionsContainerStyle} 
+     customButtons={[<CustomDeleteButton key={0}/>]}
+     >
+     <UrlField source="url" />
+     <TextField source="context" />
+ </EmbeddedArrayInput>
+```
+
+### Passing props to customize style
+
+There are four style props you can pass to customize style, those are `actionsContainerStyle`, `innerContainerStyle`, `labelStyle` & `insertDividers`.
+
+Default values of those are as follows
+
+```js
+actionsContainerStyle: {
+    clear: 'both',
+    margin: '1em',
+    display: 'block',
+    textAlign: 'right',
+},
+```
+
+```js
+innerContainerStyle: {
+    padding: '0 1em 1em 1em',
+    width: '90%',
+    display: 'inline-block',
+},
+```
+
+```js
+labelContainerStyle: {
+    padding: '1.2em 1em 0 0',
+    width: '90%',
+    display: 'inline-block',
+},
+```
+
+```js
+labelStyle: {
+    top: 0,
+    position: 'relative',
+    textTransform: 'capitalize',
+},
+```
+
+You can also pass `insertDividers` value as `true` or `false` to get the divider or not. Default value for `insertDividers` is true.

@@ -5,7 +5,7 @@ import inflection from 'inflection';
 
 import FlatButton from 'material-ui/FlatButton';
 import TextFieldLabel from 'material-ui/TextField/TextFieldLabel';
-import ContentCreateIcon from 'material-ui/svg-icons/content/create';
+import ContentAdd from 'material-ui/svg-icons/content/add';
 import ActionDeleteIcon from 'material-ui/svg-icons/action/delete';
 import Divider from 'material-ui/Divider';
 
@@ -13,41 +13,14 @@ import { translate } from 'admin-on-rest';
 
 import EmbeddedArrayInputFormField from '../form/EmbeddedArrayInputFormField';
 
-const styles = {
-    container: {
-        padding: '0 1em 1em 0em',
-        width: '90%',
-        display: 'inline-block',
-    },
-    innerContainer: {
-        padding: '0 1em 1em 1em',
-        width: '90%',
-        display: 'inline-block',
-    },
-    labelContainer: {
-        padding: '1.2em 1em 0 0',
-        width: '90%',
-        display: 'inline-block',
-    },
-    label: {
-        top: 0,
-        position: 'relative',
-        textTransform: 'capitalize',
-    },
-    removeButton: {
-        clear: 'both',
-        margin: '1em',
-        display: 'block',
-        textAlign: 'right',
-    },
-};
-
 /**
  * An Input component for generating/editing an embedded array
  *
  *
- * Use it with any set of input componentents as children, like `<TextInput>`,
- * `<SelectInput>`, `<RadioButtonGroupInput>` ... etc.
+ * Use it with any set of input components as children, like `<TextInput>`,
+ * `<SelectInput>`, `<RadioButtonGroupInput>`, etc.
+ *
+ * You must define the targeted field for each child or only use one child for primitive arrays.
  *
  * @example
  * export const CommentEdit = (props) => (
@@ -59,6 +32,16 @@ const styles = {
  *                  <ReferenceInput resource="tags" reference="tags" source="tag_id" >
  *                      <SelectInput optionText="name" />
  *                  </ReferenceInput>
+ *               </EmbeddedArrayInput>
+ *         </SimpleForm>
+ *     </Edit>
+ * );
+ * @example
+ * export const CommentEdit = (props) => (
+ *     <Edit {...props}>
+ *         <SimpleForm>
+ *              <EmbeddedArrayInput source="links">
+ *                  <TextInput />
  *               </EmbeddedArrayInput>
  *         </SimpleForm>
  *     </Edit>
@@ -86,6 +69,12 @@ export class EmbeddedArrayInput extends Component {
         readOnly: PropTypes.bool,
         record: PropTypes.object,
         source: PropTypes.string,
+        customButtons: PropTypes.node,
+        actionsContainerStyle: PropTypes.object,
+        innerContainerStyle: PropTypes.object,
+        labelContainerStyle: PropTypes.object,
+        labelStyle: PropTypes.object,
+        insertDividers: PropTypes.bool,
     };
 
     static defaultProps = {
@@ -96,13 +85,48 @@ export class EmbeddedArrayInput extends Component {
         allowRemove: true,
         labelAdd: 'aor.input.embedded_array.add',
         labelRemove: 'aor.input.embedded_array.remove',
+        insertDividers: true,
+        actionsContainerStyle: {
+            clear: 'both',
+            margin: '1em',
+            display: 'block',
+            textAlign: 'right',
+        },
+        innerContainerStyle: {
+            padding: '0 1em 1em 1em',
+            width: '90%',
+            display: 'inline-block',
+        },
+        labelContainerStyle: {
+            padding: '1.2em 1em 0 0',
+            width: '90%',
+            display: 'inline-block',
+        },
+        labelStyle: {
+            top: 0,
+            position: 'relative',
+            textTransform: 'capitalize',
+        },
     };
 
     static contextTypes = {
         muiTheme: PropTypes.object.isRequired,
     };
 
-    renderListItem = ({ allowRemove, items, inputs, member, index, translate, labelRemove, readOnly, disabled }) => {
+    renderListItem = ({
+        allowRemove,
+        items,
+        inputs,
+        member,
+        index,
+        translate,
+        labelRemove,
+        readOnly,
+        disabled,
+        customButtons,
+        actionsContainerStyle,
+        innerContainerStyle,
+    }) => {
         const removeItem = () => items.remove(index);
         const passedProps = {
             resource: this.props.resource,
@@ -112,7 +136,7 @@ export class EmbeddedArrayInput extends Component {
 
         return (
             <div className="EmbeddedArrayInputItemContainer">
-                <div style={styles.innerContainer}>
+                <div style={innerContainerStyle}>
                     {React.Children.map(
                         inputs,
                         input =>
@@ -126,16 +150,18 @@ export class EmbeddedArrayInput extends Component {
                             </div>,
                     )}
                 </div>
-                {allowRemove &&
-                    !readOnly &&
-                    !disabled &&
-                    <div style={styles.removeButton}>
-                        <FlatButton
-                            primary
-                            label={translate(labelRemove, { _: 'Remove' })}
-                            icon={<ActionDeleteIcon />}
-                            onClick={removeItem}
-                        />
+                {(customButtons || (allowRemove && !readOnly && !disabled)) &&
+                    <div style={actionsContainerStyle}>
+                        {allowRemove &&
+                            !readOnly &&
+                            !disabled &&
+                            <FlatButton
+                                secondary
+                                label={translate(labelRemove, { _: 'Remove' })}
+                                icon={<ActionDeleteIcon />}
+                                onClick={removeItem}
+                            />}
+                        {customButtons && customButtons.map(button => React.cloneElement(button, { items, index }))}
                     </div>}
             </div>
         );
@@ -152,6 +178,10 @@ export class EmbeddedArrayInput extends Component {
             allowRemove,
             readOnly,
             disabled,
+            customButtons,
+            actionsContainerStyle,
+            innerContainerStyle,
+            insertDividers,
         } = this.props;
         const createItem = () => items.push();
 
@@ -170,8 +200,11 @@ export class EmbeddedArrayInput extends Component {
                                 allowRemove,
                                 readOnly,
                                 disabled,
+                                customButtons,
+                                actionsContainerStyle,
+                                innerContainerStyle,
                             })}
-                            {index < items.length - 1 && <Divider />}
+                            {insertDividers && index < items.length - 1 && <Divider />}
                         </div>,
                     )}
                 </div>
@@ -181,7 +214,7 @@ export class EmbeddedArrayInput extends Component {
                     !disabled &&
                     <FlatButton
                         primary
-                        icon={<ContentCreateIcon />}
+                        icon={<ContentAdd />}
                         label={translate(labelAdd, { _: 'Add' })}
                         onClick={createItem}
                     />}
@@ -190,8 +223,8 @@ export class EmbeddedArrayInput extends Component {
     };
 
     render() {
-        const { source, label, addLabel, translate, resource } = this.props;
-        const labelStyle = Object.assign(styles.label, {
+        const { source, label, addLabel, translate, resource, labelStyle, labelContainerStyle } = this.props;
+        const labelStyleMuiTheme = Object.assign(labelStyle, {
             color: this.context.muiTheme ? this.context.muiTheme.textField.focusColor : '',
         });
 
@@ -207,8 +240,8 @@ export class EmbeddedArrayInput extends Component {
 
         const labelElement =
             !addLabel &&
-            <div style={styles.labelContainer}>
-                <TextFieldLabel muiTheme={this.context.muiTheme} style={labelStyle} shrink={false}>
+            <div style={labelContainerStyle}>
+                <TextFieldLabel muiTheme={this.context.muiTheme} style={labelStyleMuiTheme} shrink={false}>
                     {minimizedLabel}
                 </TextFieldLabel>
             </div>;
